@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: taskflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - taskflow_pgdata:/var/lib/postgresql/data
+      - ../src/db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+
+volumes:
+  taskflow_pgdata:
