@@ -1,5 +1,7 @@
 # Taskflow
 
+![CI](https://github.com/marshad7/taskflow/actions/workflows/ci.yml/badge.svg)
+
 Taskflow is a full-stack task management web application built with Node.js, Express, and PostgreSQL.
 
 ## Planned Features
