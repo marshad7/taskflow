@@ -1,4 +1,9 @@
-require("dotenv").config();
+const dotenv = require("dotenv");
+
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? ".env.test" : ".env",
+  quiet: process.env.NODE_ENV === "test",
+});
 
 const config = {
   port: Number(process.env.PORT || 3000),
