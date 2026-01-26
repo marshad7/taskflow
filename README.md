@@ -23,4 +23,4 @@ npm install
 npm run dev
 
 ## Status
-Work in progress — actively being developed.
+Work in progress (actively being developed)
