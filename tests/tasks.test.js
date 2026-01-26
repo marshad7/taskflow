@@ -16,7 +16,7 @@ describe("tasks", () => {
     const app = createApp();
     const agent = request.agent(app);
 
-    await registerAndLogin(agent, "a@example.com");
+    await registerAndLogin(agent, "crud@example.com");
 
     const created = await agent
       .post("/tasks")
@@ -47,8 +47,8 @@ describe("tasks", () => {
     const a = request.agent(app);
     const b = request.agent(app);
 
-    await registerAndLogin(a, "a@example.com");
-    await registerAndLogin(b, "b@example.com");
+    await registerAndLogin(a, "usera@example.com");
+    await registerAndLogin(b, "userb@example.com");
 
     await a.post("/tasks").send({ title: "A task" });
     await b.post("/tasks").send({ title: "B task" });
@@ -61,5 +61,30 @@ describe("tasks", () => {
 
     expect(bList.body.tasks.length).toBe(1);
     expect(bList.body.tasks[0].title).toBe("B task");
+  });
+
+  test("create task rejects empty title (400)", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "v1@example.com");
+
+    const res = await agent.post("/tasks").send({ title: "" });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test("update task rejects invalid status (400)", async () => {
+    const app = createApp();
+    const agent = request.agent(app);
+
+    await registerAndLogin(agent, "v2@example.com");
+
+    const created = await agent.post("/tasks").send({ title: "Test task" });
+    expect(created.statusCode).toBe(201);
+
+    const id = created.body.task.id;
+
+    const res = await agent.put(`/tasks/${id}`).send({ status: "finished" });
+    expect(res.statusCode).toBe(400);
   });
 });

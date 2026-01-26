@@ -59,15 +59,14 @@ async function listTasks(req, res) {
 async function createTask(req, res) {
   const userId = req.session.userId;
 
-  const title = String(req.body.title || "").trim();
-  const description = String(req.body.description || "").trim();
-  const status = req.body.status ? normalizeStatus(req.body.status) : "todo";
-  const priority = req.body.priority ? normalizePriority(req.body.priority) : "medium";
-  const dueDate = req.body.due_date ? String(req.body.due_date) : null;
+  // ✅ Zod validated input
+  const body = req.validated?.body || req.body;
 
-  if (!title) return res.status(400).json({ error: "title is required" });
-  if (!status) return res.status(400).json({ error: "invalid status" });
-  if (!priority) return res.status(400).json({ error: "invalid priority" });
+  const title = body.title;
+  const description = body.description ?? "";
+  const status = body.status ?? "todo";
+  const priority = body.priority ?? "medium";
+  const dueDate = body.due_date ?? null;
 
   try {
     const result = await pool.query(
@@ -87,59 +86,53 @@ async function createTask(req, res) {
 
 async function updateTask(req, res) {
   const userId = req.session.userId;
-  const taskId = Number(req.params.id);
 
+  // ✅ Zod validated input
+  const body = req.validated?.body || req.body;
+  const params = req.validated?.params || req.params;
+
+  const taskId = Number(params.id);
   if (!Number.isInteger(taskId)) return res.status(400).json({ error: "invalid id" });
 
   const fields = [];
   const values = [];
   let idx = 1;
 
-  if (req.body.title !== undefined) {
-    const title = String(req.body.title || "").trim();
-    if (!title) return res.status(400).json({ error: "title cannot be empty" });
+  if (body.title !== undefined) {
     fields.push(`title = $${idx++}`);
-    values.push(title);
+    values.push(body.title);
   }
 
-  if (req.body.description !== undefined) {
-    const description = String(req.body.description || "").trim();
+  if (body.description !== undefined) {
     fields.push(`description = $${idx++}`);
-    values.push(description);
+    values.push(body.description);
   }
 
-  if (req.body.status !== undefined) {
-    const status = normalizeStatus(req.body.status);
-    if (!status) return res.status(400).json({ error: "invalid status" });
+  if (body.status !== undefined) {
     fields.push(`status = $${idx++}`);
-    values.push(status);
+    values.push(body.status);
 
-    if (status === "done") {
+    if (body.status === "done") {
       fields.push(`completed_at = COALESCE(completed_at, NOW())`);
     } else {
       fields.push(`completed_at = NULL`);
     }
   }
 
-  if (req.body.priority !== undefined) {
-    const priority = normalizePriority(req.body.priority);
-    if (!priority) return res.status(400).json({ error: "invalid priority" });
+  if (body.priority !== undefined) {
     fields.push(`priority = $${idx++}`);
-    values.push(priority);
+    values.push(body.priority);
   }
 
-  if (req.body.due_date !== undefined) {
-    const dueDate = req.body.due_date ? String(req.body.due_date) : null;
+  if (body.due_date !== undefined) {
     fields.push(`due_date = $${idx++}`);
-    values.push(dueDate);
+    values.push(body.due_date);
   }
 
   if (fields.length === 0) return res.status(400).json({ error: "no fields to update" });
 
-  // updated_at always changes
   fields.push(`updated_at = NOW()`);
 
-  // where clause params
   values.push(taskId);
   values.push(userId);
 
