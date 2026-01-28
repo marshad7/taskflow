@@ -1,34 +1,26 @@
 const { pool } = require("../db/pool");
 
-function normalizeStatus(v) {
-  const s = String(v || "").toLowerCase();
-  return ["todo", "doing", "done"].includes(s) ? s : null;
-}
-
-function normalizePriority(v) {
-  const p = String(v || "").toLowerCase();
-  return ["low", "medium", "high"].includes(p) ? p : null;
-}
-
 async function listTasks(req, res) {
   const userId = req.session.userId;
 
-  const { status, priority, q } = req.query;
+  const query = req.validated?.query || req.query;
+  const { status, priority, q } = query;
+
+  const limit = Number(query.limit ?? 10);
+  const offset = Number(query.offset ?? 0);
 
   const filters = ["user_id = $1"];
   const values = [userId];
   let idx = 2;
 
-  const st = status ? normalizeStatus(status) : null;
-  if (st) {
+  if (status) {
     filters.push(`status = $${idx++}`);
-    values.push(st);
+    values.push(status);
   }
 
-  const pr = priority ? normalizePriority(priority) : null;
-  if (pr) {
+  if (priority) {
     filters.push(`priority = $${idx++}`);
-    values.push(pr);
+    values.push(priority);
   }
 
   if (q) {
@@ -37,20 +29,31 @@ async function listTasks(req, res) {
     idx++;
   }
 
-  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  const where = `WHERE ${filters.join(" AND ")}`;
 
   try {
-    const result = await pool.query(
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM tasks ${where}`,
+      values
+    );
+    const total = countRes.rows[0].total;
+
+    const pageValues = [...values, limit, offset];
+    const dataRes = await pool.query(
       `
       SELECT id, title, description, status, priority, due_date, created_at, updated_at, completed_at
       FROM tasks
       ${where}
       ORDER BY created_at DESC
+      LIMIT $${idx++} OFFSET $${idx++}
       `,
-      values
+      pageValues
     );
 
-    return res.status(200).json({ tasks: result.rows });
+    return res.status(200).json({
+      tasks: dataRes.rows,
+      page: { limit, offset, total },
+    });
   } catch (err) {
     return res.status(500).json({ error: "server error" });
   }
@@ -59,7 +62,6 @@ async function listTasks(req, res) {
 async function createTask(req, res) {
   const userId = req.session.userId;
 
-  // ✅ Zod validated input
   const body = req.validated?.body || req.body;
 
   const title = body.title;
@@ -87,7 +89,6 @@ async function createTask(req, res) {
 async function updateTask(req, res) {
   const userId = req.session.userId;
 
-  // ✅ Zod validated input
   const body = req.validated?.body || req.body;
   const params = req.validated?.params || req.params;
 
@@ -156,9 +157,13 @@ async function updateTask(req, res) {
 
 async function deleteTask(req, res) {
   const userId = req.session.userId;
-  const taskId = Number(req.params.id);
 
-  if (!Number.isInteger(taskId)) return res.status(400).json({ error: "invalid id" });
+  const params = req.validated?.params || req.params;
+  const taskId = Number(params.id);
+
+  if (!Number.isInteger(taskId)) {
+    return res.status(400).json({ error: "invalid id" });
+  }
 
   try {
     const result = await pool.query(
@@ -166,9 +171,12 @@ async function deleteTask(req, res) {
       [taskId, userId]
     );
 
-    if (!result.rows.length) return res.status(404).json({ error: "task not found" });
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "task not found" });
+    }
+
     return res.status(200).json({ ok: true });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ error: "server error" });
   }
 }

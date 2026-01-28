@@ -1,0 +1,66 @@
+doctype html
+html
+  head
+    title Taskflow
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    meta(name="csrf-token", content=csrfToken)
+    link(rel="stylesheet", href="/public/styles.css")
+
+  body
+    header
+      h1 Taskflow
+
+      .card
+        .row
+          input#email(type="email" placeholder="Email" autocomplete="username")
+          input#password(type="password" placeholder="Password" autocomplete="current-password")
+          button#loginBtn(type="button") Login
+          button#registerBtn(type="button") Register
+          button#logoutBtn(type="button" style="display:none;") Logout
+
+        p#authStatus.muted Checking session...
+
+        p#registerHint.helper(style="display:none;")
+          span Don’t have an account?
+          button#registerLink(type="button" class="link") Register now
+
+        p#errorBanner.error(style="display:none;")
+
+    main
+      section#tasks.card
+        .row
+          input#taskTitle(type="text" placeholder="New task title" disabled)
+          select#prioritySelect(disabled)
+            option(value="low") Low
+            option(value="medium" selected) Medium
+            option(value="high") High
+          input#dueDateInput(type="date" disabled)
+          button#addBtn(type="button" disabled) Add
+
+        // Description input
+        .row(style="margin-top:10px;")
+          textarea#taskDescription(placeholder="Description (optional)" rows="2" disabled style="width:100%;")
+
+        .row(style="margin-top:12px")
+          input#searchInput(type="text" placeholder="Search..." disabled)
+          select#statusFilter(disabled)
+            option(value="") All statuses
+            option(value="todo") Todo
+            option(value="doing") Doing
+            option(value="done") Done
+          select#priorityFilter(disabled)
+            option(value="") All priorities
+            option(value="low") Low
+            option(value="medium") Medium
+            option(value="high") High
+          button#applyFiltersBtn(type="button" disabled) Apply
+
+        .row(style="margin-top:12px")
+          button#prevPageBtn(type="button" disabled) Prev
+          span#pageInfo.muted Page 1 / 1
+          button#nextPageBtn(type="button" disabled) Next
+
+        ul#taskList
+
+    script(src="/public/app.js")

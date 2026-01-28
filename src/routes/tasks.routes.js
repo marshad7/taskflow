@@ -1,3 +1,4 @@
+const { listTasksSchema } = require("../validation/tasks.list.schema");
 const express = require("express");
 const { requireAuth } = require("../middleware/requireAuth");
 const {
@@ -16,7 +17,7 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.get("/", listTasks);
+router.get("/", validate(listTasksSchema), listTasks);
 
 router.post(
   "/",
