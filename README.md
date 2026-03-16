@@ -2,85 +2,87 @@
 
 ![CI](https://github.com/marshad7/taskflow/actions/workflows/ci.yml/badge.svg)
 
-Taskflow is a full-stack task management application built with Node.js, Express, and PostgreSQL.
-It features secure session-based authentication, CSRF protection, and a polished task user experience with pagination, filtering, and inline editing.
+A task management app built with Node.js, Express, and PostgreSQL. Session-based auth, CSRF protection, inline editing, filtering, and pagination — kept intentionally simple and framework-light.
 
-This project is designed as a production-style MVP with strong security, validation, and testing foundations.
+---
+
+## Stack
+
+- **Backend** — Node.js, Express 5, PostgreSQL
+- **Auth** — express-session, connect-pg-simple, bcryptjs
+- **Security** — csrf-csrf, Helmet, express-rate-limit
+- **Validation** — Zod
+- **Frontend** — Pug, vanilla JS, CSS
+- **Testing** — Jest, Supertest
+- **CI** — GitHub Actions
 
 ---
 
 ## Features
 
-Authentication and Security
-- Register, login, and logout using session-based authentication
-- Password hashing with bcrypt
-- Password rules enforced at registration
+**Auth**
+- Register, login, logout
+- Session-based with PostgreSQL session store
+- Passwords hashed with bcrypt
 - CSRF protection with automatic token refresh
-- Rate limiting and secure HTTP headers via Helmet
-- Clear authentication error handling (incorrect password vs account not found)
-- User-scoped data isolation
+- Rate limiting and secure HTTP headers
 
-Task Management
-- Create, list, update, and delete tasks
-- Task descriptions
-- Status support: todo, doing, done
-- Priority support: low, medium, high
-- Optional due dates
-- Inline editing for task fields
-- Due-date intelligence (upcoming and overdue cues)
-- Pagination, filtering, and search
+**Tasks**
+- Create, update, delete tasks
+- Status: `todo` / `doing` / `done`
+- Priority: `low` / `medium` / `high`
+- Optional due dates with overdue and due-today indicators
+- Inline editing for title and description
+- Search, filter by status/priority, pagination
 
-Quality and Tooling
-- Jest and Supertest integration tests
-- GitHub Actions CI with PostgreSQL service
-- Request validation using Zod
-- Docker Compose for local PostgreSQL
-- Clear separation of controllers, routes, validation, and frontend assets
+**Quality**
+- Integration tests covering auth, CRUD, data isolation, and validation
+- Zod validation on all write endpoints
+- GitHub Actions CI running tests against a real PostgreSQL instance
+- Clean separation of routes, controllers, middleware, and validation
 
 ---
 
-## Tech Stack
-- Node.js, Express
-- PostgreSQL
-- express-session and connect-pg-simple
-- bcrypt
-- csurf, helmet, express-rate-limit
-- Zod
-- Jest and Supertest
-- GitHub Actions
-- Pug, vanilla JavaScript, CSS
+## Running locally
 
----
-
-## Run Locally
-
-Start PostgreSQL:
+**1. Start PostgreSQL**
+```bash
 docker compose -f docker/docker-compose.yml up -d
+```
 
-Install dependencies:
+**2. Install dependencies**
+```bash
 npm install
+```
 
-Initialize database schema:
+**3. Initialize the database**
+```bash
 psql $DATABASE_URL -f src/db/schema.sql
+```
 
-Start the application:
+**4. Start the dev server**
+```bash
 npm run dev
+```
 
-Open the app at:
-http://localhost:3000/app
+Open [http://localhost:3000/app](http://localhost:3000/app)
 
 ---
 
-## Notes
-- Tests run automatically in CI on every push
-- CSRF tokens are refreshed automatically when authentication state changes
-- Frontend and backend are intentionally kept explicit and framework-light
+## Tests
+
+```bash
+npm test
+```
+
+Tests run in-band against a separate `taskflow_test` database. CI runs on every push.
 
 ---
 
 ## Roadmap
-- Email verification and password recovery
-- Calendar integrations (Google and Apple)
-- Email reminders for upcoming tasks
-- Recurring tasks and workflows
-- Production deployment
+
+- Email verification and password reset
+- Recurring tasks
+- Email reminders for upcoming due dates
+- Google / Apple Calendar integration
+- Production deployment guide
