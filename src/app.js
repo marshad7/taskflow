@@ -7,10 +7,20 @@ const PgSession = require("connect-pg-simple")(session);
 
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const csurf = require("csurf");
+const { doubleCsrf } = require("csrf-csrf");
 
 const { config } = require("./config/env");
 const { pool } = require("./db/pool");
+
+const { generateToken, doubleCsrfProtection } = doubleCsrf({
+  getSecret: () => config.sessionSecret,
+  cookieName: "csrf-token",
+  cookieOptions: {
+    sameSite: "lax",
+    httpOnly: true,
+    secure: config.nodeEnv === "production",
+  },
+});
 
 function createApp() {
   const app = express();
@@ -65,22 +75,18 @@ function createApp() {
 
   // CSRF protection (skip tests)
   if (config.nodeEnv !== "test") {
-    app.use(
-      csurf({
-        cookie: false, // store secret in session
-      })
-    );
+    app.use(doubleCsrfProtection);
   }
 
-  // UI entry (must be AFTER csurf)
+  // UI entry
   app.get("/app", (req, res) => {
-    const csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : "";
+    const csrfToken = config.nodeEnv !== "test" ? generateToken(req, res) : "";
     res.render("app", { csrfToken });
   });
 
   // Endpoint to refresh CSRF token without reloading page
   app.get("/csrf", (req, res) => {
-    const csrfToken = typeof req.csrfToken === "function" ? req.csrfToken() : "";
+    const csrfToken = config.nodeEnv !== "test" ? generateToken(req, res) : "";
     res.status(200).json({ csrfToken });
   });
 
@@ -96,7 +102,7 @@ function createApp() {
 
   // CSRF error handler (JSON, not HTML)
   app.use((err, req, res, next) => {
-    if (err && err.code === "EBADCSRFTOKEN") {
+    if (err && (err.code === "EBADCSRFTOKEN" || err.message === "invalid csrf token")) {
       return res.status(403).json({ error: "Invalid CSRF token" });
     }
     return next(err);

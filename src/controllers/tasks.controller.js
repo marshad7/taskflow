@@ -3,7 +3,7 @@ const { pool } = require("../db/pool");
 async function listTasks(req, res) {
   const userId = req.session.userId;
 
-  const query = req.validated?.query || req.query;
+  const query = req.validated.query;
   const { status, priority, q } = query;
 
   const limit = Number(query.limit ?? 10);
@@ -55,6 +55,7 @@ async function listTasks(req, res) {
       page: { limit, offset, total },
     });
   } catch (err) {
+    console.error("listTasks error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }
@@ -62,7 +63,7 @@ async function listTasks(req, res) {
 async function createTask(req, res) {
   const userId = req.session.userId;
 
-  const body = req.validated?.body || req.body;
+  const body = req.validated.body;
 
   const title = body.title;
   const description = body.description ?? "";
@@ -82,6 +83,7 @@ async function createTask(req, res) {
 
     return res.status(201).json({ task: result.rows[0] });
   } catch (err) {
+    console.error("createTask error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }
@@ -89,8 +91,8 @@ async function createTask(req, res) {
 async function updateTask(req, res) {
   const userId = req.session.userId;
 
-  const body = req.validated?.body || req.body;
-  const params = req.validated?.params || req.params;
+  const body = req.validated.body;
+  const params = req.validated.params;
 
   const taskId = Number(params.id);
   if (!Number.isInteger(taskId)) return res.status(400).json({ error: "invalid id" });
@@ -151,6 +153,7 @@ async function updateTask(req, res) {
     if (!result.rows.length) return res.status(404).json({ error: "task not found" });
     return res.status(200).json({ task: result.rows[0] });
   } catch (err) {
+    console.error("updateTask error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }
@@ -158,8 +161,7 @@ async function updateTask(req, res) {
 async function deleteTask(req, res) {
   const userId = req.session.userId;
 
-  const params = req.validated?.params || req.params;
-  const taskId = Number(params.id);
+  const taskId = Number(req.params.id);
 
   if (!Number.isInteger(taskId)) {
     return res.status(400).json({ error: "invalid id" });
@@ -176,7 +178,8 @@ async function deleteTask(req, res) {
     }
 
     return res.status(200).json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("deleteTask error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }

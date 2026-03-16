@@ -239,17 +239,7 @@ async function login() {
     await refreshCsrfToken();
     await fetchTasks();
   } catch (e) {
-    if (e.status === 404) {
-      showError("Account not found. You can register now.");
-      showRegisterHint(true);
-      return;
-    }
-    if (e.status === 401) {
-      showError("Incorrect password.");
-      showRegisterHint(false);
-      return;
-    }
-    showError(e.message);
+    showError("Invalid email or password.");
   }
 }
 

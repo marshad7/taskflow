@@ -1,21 +1,10 @@
 const bcrypt = require("bcryptjs");
 const { pool } = require("../db/pool");
 
-const MIN_PASSWORD_LEN = 8;
 
 async function register(req, res) {
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
-
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password required" });
-  }
-
-  if (password.length < MIN_PASSWORD_LEN) {
-    return res
-      .status(400)
-      .json({ error: "Password must be at least 8 characters long" });
-  }
+  const { email: rawEmail, password } = req.validated.body;
+  const email = rawEmail.toLowerCase();
 
   try {
     // Check existing
@@ -42,17 +31,14 @@ async function register(req, res) {
 
     return res.status(201).json({ user });
   } catch (err) {
+    console.error("register error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }
 
 async function login(req, res) {
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
-
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password required" });
-  }
+  const { email: rawEmail, password } = req.validated.body;
+  const email = rawEmail.toLowerCase();
 
   try {
     const result = await pool.query(
@@ -61,19 +47,15 @@ async function login(req, res) {
     );
 
     const user = result.rows[0];
-    if (!user) {
-      // Important: different status so UI can show “Register now”
-      return res.status(404).json({ error: "Account not found" });
-    }
-
-    const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) {
-      return res.status(401).json({ error: "Incorrect password" });
+    const passwordMatch = user ? await bcrypt.compare(password, user.password_hash) : false;
+    if (!user || !passwordMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     req.session.userId = user.id;
     return res.status(200).json({ user: { id: user.id, email: user.email } });
   } catch (err) {
+    console.error("login error:", err);
     return res.status(500).json({ error: "server error" });
   }
 }
