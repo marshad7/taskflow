@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+ai-service/venv/
+__pycache__/
+*.pyc
 
 # Environment variables
 .env

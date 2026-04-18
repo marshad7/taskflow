@@ -7,17 +7,19 @@ const PgSession = require("connect-pg-simple")(session);
 
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
 const { doubleCsrf } = require("csrf-csrf");
 
 const { config } = require("./config/env");
 const { pool } = require("./db/pool");
 
-const { generateToken, doubleCsrfProtection } = doubleCsrf({
+const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => config.sessionSecret,
+  getSessionIdentifier: (req) => req.session?.id ?? "",
   cookieName: "csrf-token",
   cookieOptions: {
     sameSite: "lax",
-    httpOnly: true,
+    httpOnly: false,
     secure: config.nodeEnv === "production",
   },
 });
@@ -36,7 +38,8 @@ function createApp() {
     })
   );
 
-  // Parse form + JSON
+  // Parse cookies, form + JSON
+  app.use(cookieParser());
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
@@ -78,24 +81,31 @@ function createApp() {
     app.use(doubleCsrfProtection);
   }
 
-  // UI entry
+  // UI entry — touch session so it gets a stable ID before CSRF token is generated
   app.get("/app", (req, res) => {
-    const csrfToken = config.nodeEnv !== "test" ? generateToken(req, res) : "";
-    res.render("app", { csrfToken });
+    if (!req.session.initialized) {
+      req.session.initialized = true;
+    }
+    req.session.save(() => {
+      const csrfToken = config.nodeEnv !== "test" ? generateCsrfToken(req, res) : "";
+      res.render("app", { csrfToken });
+    });
   });
 
   // Endpoint to refresh CSRF token without reloading page
   app.get("/csrf", (req, res) => {
-    const csrfToken = config.nodeEnv !== "test" ? generateToken(req, res) : "";
+    const csrfToken = config.nodeEnv !== "test" ? generateCsrfToken(req, res) : "";
     res.status(200).json({ csrfToken });
   });
 
   // API routes
   const { authRouter } = require("./routes/auth.routes");
   const { tasksRouter } = require("./routes/tasks.routes");
+  const { aiRouter } = require("./routes/ai.routes");
 
   app.use("/auth", authRouter);
   app.use("/tasks", tasksRouter);
+  app.use("/ai", aiRouter);
 
   // Health
   app.get("/health", (req, res) => res.send("ok"));

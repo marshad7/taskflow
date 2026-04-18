@@ -63,4 +63,11 @@ html
 
         ul#taskList
 
+      .row(style="margin-top:16px")
+        button#planBtn(type="button" disabled) Plan My Day
+
+      #planOutput(style="display:none;")
+        h3 Your Plan
+        p#planText
+
     script(src="/public/app.js")

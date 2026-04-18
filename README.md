@@ -2,19 +2,24 @@
 
 ![CI](https://github.com/marshad7/taskflow/actions/workflows/ci.yml/badge.svg)
 
-A task management app built with Node.js, Express, and PostgreSQL. Session-based auth, CSRF protection, inline editing, filtering, and pagination — kept intentionally simple and framework-light.
+A task management app built with Node.js, Express, and PostgreSQL — with an AI-powered daily planner backed by a Python/Flask microservice using the Gemini API.
 
 ---
 
 ## Stack
 
-- **Backend** — Node.js, Express 5, PostgreSQL
-- **Auth** — express-session, connect-pg-simple, bcryptjs
-- **Security** — csrf-csrf, Helmet, express-rate-limit
-- **Validation** — Zod
-- **Frontend** — Pug, vanilla JS, CSS
-- **Testing** — Jest, Supertest
-- **CI** — GitHub Actions
+**Node.js App**
+- Backend — Node.js, Express 5, PostgreSQL
+- Auth — express-session, connect-pg-simple, bcryptjs
+- Security — csrf-csrf, Helmet, express-rate-limit
+- Validation — Zod
+- Frontend — Pug, vanilla JS, CSS
+- Testing — Jest, Supertest
+- CI — GitHub Actions
+
+**AI Service**
+- Python, Flask
+- Google Gemini API
 
 ---
 
@@ -35,6 +40,12 @@ A task management app built with Node.js, Express, and PostgreSQL. Session-based
 - Inline editing for title and description
 - Search, filter by status/priority, pagination
 
+**AI Daily Planner**
+- "Plan My Day" button sends your tasks to a Python/Flask microservice
+- Gemini API analyzes priority, due dates, and status
+- Returns a focused, actionable daily plan
+- Rate limited to 5 requests per user per 24 hours
+
 **Quality**
 - Integration tests covering auth, CRUD, data isolation, and validation
 - Zod validation on all write endpoints
@@ -50,7 +61,7 @@ A task management app built with Node.js, Express, and PostgreSQL. Session-based
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-**2. Install dependencies**
+**2. Install Node.js dependencies**
 ```bash
 npm install
 ```
@@ -60,12 +71,40 @@ npm install
 psql $DATABASE_URL -f src/db/schema.sql
 ```
 
-**4. Start the dev server**
+**4. Set up the AI service**
+```bash
+cd ai-service
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # add your GEMINI_API_KEY
+python app.py
+```
+
+**5. Start the Node.js dev server**
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000/app](http://localhost:3000/app)
+
+---
+
+## Environment variables
+
+**Node.js** (`.env`):
+```
+PORT=3000
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/taskflow
+SESSION_SECRET=change-me
+NODE_ENV=development
+```
+
+**AI service** (`ai-service/.env`):
+```
+GEMINI_API_KEY=your-api-key-here
+FLASK_ENV=development
+```
 
 ---
 

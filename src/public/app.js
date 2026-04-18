@@ -54,6 +54,11 @@ const pageInfoEl = $("pageInfo");
 // Task list
 const taskListEl = $("taskList");
 
+// AI plan
+const planBtn = $("planBtn");
+const planOutput = $("planOutput");
+const planText = $("planText");
+
 // Global state
 const state = {
   user: null,
@@ -108,6 +113,11 @@ function setAuthedUI(isAuthed) {
 
   prevPageBtn.disabled = !isAuthed;
   nextPageBtn.disabled = !isAuthed;
+  planBtn.disabled = !isAuthed;
+  if (!isAuthed) {
+    planOutput.style.display = "none";
+    planText.textContent = "";
+  }
 }
 
 // Query string helper
@@ -545,6 +555,23 @@ prevPageBtn.addEventListener("click", () => {
 nextPageBtn.addEventListener("click", () => {
   state.offset += state.limit;
   fetchTasks();
+});
+
+planBtn.addEventListener("click", async () => {
+  planBtn.disabled = true;
+  planBtn.textContent = "Planning...";
+  planOutput.style.display = "none";
+
+  try {
+    const data = await api("/ai/plan");
+    planText.textContent = data.plan;
+    planOutput.style.display = "block";
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    planBtn.disabled = false;
+    planBtn.textContent = "Plan My Day";
+  }
 });
 
 // Boot
