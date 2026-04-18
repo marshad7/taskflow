@@ -8,18 +8,10 @@ A task management app built with Node.js, Express, and PostgreSQL — with an AI
 
 ## Stack
 
-**Node.js App**
-- Backend — Node.js, Express 5, PostgreSQL
-- Auth — express-session, connect-pg-simple, bcryptjs
-- Security — csrf-csrf, Helmet, express-rate-limit
-- Validation — Zod
-- Frontend — Pug, vanilla JS, CSS
-- Testing — Jest, Supertest
-- CI — GitHub Actions
-
-**AI Service**
-- Python, Flask
-- Google Gemini API
+- **Backend** — Node.js, Express, PostgreSQL
+- **AI Service** — Python, Flask, Google Gemini API
+- **Frontend** — Pug, vanilla JS, CSS
+- **Testing** — Jest, Supertest, GitHub Actions CI
 
 ---
 
